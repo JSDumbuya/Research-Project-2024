@@ -1,6 +1,6 @@
 
 def ensureBalancedDataSet():
-    return 0;
+    return 0
 
 def createCorpus():
     return 0
