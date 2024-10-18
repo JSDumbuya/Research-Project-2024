@@ -17,7 +17,6 @@ def createCorpus():
     return 0
 
 #Related to Runners world scraping
-
 KEYWORDS = [
     "Backyard Ultra", "Ultramarathon", "UTMB", "Barkley marathons", "Ultrarunner", "Ultrarunning"
 ]
@@ -77,7 +76,7 @@ def runnersWorldScraping():
 
 
     # Write to CSV file
-    with open('runners_stories_corpus.csv', mode='w', newline='', encoding='utf-8') as file:
+    with open('runnersworld.csv', mode='w', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
         writer.writerow(['Header', 'Body'])
 
@@ -97,6 +96,66 @@ def runnersWorldScraping():
 
 #EOF: code related to Runners world scraping
 
-#Commented out to ensure that new csv file is not created again.
-"""if __name__ == "__main__":
-    runnersWorldScraping()"""
+
+#Related to The Gaurdian scraping
+
+def theGuardianScraping():
+    base_url = "https://www.theguardian.com"
+    article_base_url = "https://www.theguardian.com/lifeandstyle/ultrarunning"
+    all_articles = []
+
+    # Loop through pages 1 to 5 
+    for page in range(1, 6):
+        if page > 1:
+            url = f"{article_base_url}?page={page}"
+        else:
+            url = article_base_url
+        
+        response = requests.get(url)
+        
+        if response.status_code != 200:
+            print(f"Failed to retrieve page {page}. Status code: {response.status_code}")
+            continue
+        
+        soup = BeautifulSoup(response.content, 'html.parser')
+
+        articles = soup.find_all('a', href=True, attrs={'data-link-name': True})
+
+        for article in articles:
+            href = article['href']
+
+            if not (article['data-link-name'].startswith('feature') or article['data-link-name'].startswith('news')):
+                continue
+            
+            if href.startswith('/'):
+                href = base_url + href
+            
+            # Fetch the article page
+            article_response = requests.get(href)
+            if article_response.status_code != 200:
+                print(f"Failed to retrieve article: {href}. Status code: {article_response.status_code}")
+                continue
+            
+            article_soup = BeautifulSoup(article_response.content, 'html.parser')
+            
+            header = article_soup.find('h1').get_text(strip=True) if article_soup.find('h1') else 'No Title'
+            paragraphs = article_soup.find_all('p')
+            body = ' '.join([para.get_text(strip=True) for para in paragraphs])
+
+            all_articles.append({'header': header, 'body': body})
+
+    keys = all_articles[0].keys() if all_articles else []
+    with open('thegaurdian.csv', 'w', newline='', encoding='utf-8') as output_file:
+        dict_writer = csv.DictWriter(output_file, fieldnames=keys)
+        dict_writer.writeheader()
+        dict_writer.writerows(all_articles)
+
+
+
+#EOF: code related to The Gaurdian scraping 
+
+if __name__ == "__main__":
+    #runnersWorldScraping()
+    #theGuardianScraping()
+    #Remember to remove again
+    print("Hello world")
