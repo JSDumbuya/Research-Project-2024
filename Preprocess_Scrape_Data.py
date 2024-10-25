@@ -15,8 +15,8 @@ from nltk.stem import WordNetLemmatizer
 def ensureBalancedDataSet():
     return 0
 
-corpus = []
-all_filenames = ['runnersworld.csv', 'thegaurdian.csv']
+
+all_filenames = ['runnersworld.csv', 'thegaurdian.csv', 'irunfar copy.csv']
 preprocessedData = []
 lemmatizer = WordNetLemmatizer()
 stop_words = set(stopwords.words('english'))
@@ -30,10 +30,12 @@ def preprocessData():
     data = pd.concat(tempPreprocessing, ignore_index=True)
 
     for column in ['header', 'body']:
+        #Insert space between camel case words
+        data[column] = data[column].apply(lambda text: re.sub(r'(?<=[a-z])(?=[A-Z])', ' ', text))
         # Convert to lowercase
         data[column] = data[column].apply(lambda text: text.lower() if isinstance(text, str) else '')
         # Remove punctuation and non-alphabetic characters
-        data[column] = data[column].apply(lambda text: re.sub(r'[^a-z\s]', '', text))
+        data[column] = data[column].apply(lambda text: re.sub(r'[^a-z\s]', ' ', text))
         # Tokenize the text
         data[column] = data[column].apply(lambda text: word_tokenize(text))
         # Remove stopwords and lemmatize
@@ -42,7 +44,7 @@ def preprocessData():
         data_single_column = pd.concat([data['header'], data['body']], ignore_index=True).to_frame(name='text')
 
         # Return the DataFrame with a single 'text' column
-        data_single_column.to_csv('preprocessed_tg_rw.csv', index=False)
+        data_single_column.to_csv('preprocessed_data.csv', index=False)
 
 
 #Related to Runners world scraping
@@ -180,3 +182,5 @@ def theGuardianScraping():
         dict_writer.writerows(all_articles)
 
 #EOF: code related to The Gaurdian scraping 
+
+preprocessData()
