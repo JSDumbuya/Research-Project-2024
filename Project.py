@@ -2,19 +2,52 @@ import requests
 from bs4 import BeautifulSoup
 import csv
 from urllib.parse import urljoin
+import pandas as pd
+import re
+import nltk
+nltk.download('punkt_tab')
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
 
 #check .../robots.txt to see if we have permission to scrape site.
-
-corpus = []
 
 def ensureBalancedDataSet():
     return 0
 
-def preprocess():
-    return 0
+corpus = []
+all_filenames = ['runnersworld.csv', 'thegaurdian.csv']
+preprocessedData = []
+lemmatizer = WordNetLemmatizer()
+stop_words = set(stopwords.words('english'))
+tempPreprocessing = []
+
+def preprocessData():
+    for file in all_filenames:
+        df = pd.read_csv(file)
+        df.columns = [col.lower() for col in df.columns]  # Standardize column names to lowercase
+        tempPreprocessing.append(df)
+    data = pd.concat(tempPreprocessing, ignore_index=True)
+
+    for column in ['header', 'body']:
+        # Convert to lowercase
+        data[column] = data[column].apply(lambda text: text.lower() if isinstance(text, str) else '')
+        # Remove punctuation and non-alphabetic characters
+        data[column] = data[column].apply(lambda text: re.sub(r'[^a-z\s]', '', text))
+        # Tokenize the text
+        data[column] = data[column].apply(lambda text: word_tokenize(text))
+        # Remove stopwords and lemmatize
+        data[column] = data[column].apply(lambda tokens: [lemmatizer.lemmatize(word) for word in tokens if word not in stop_words])
+
+        data_single_column = pd.concat([data['header'], data['body']], ignore_index=True).to_frame(name='text')
+
+        # Return the DataFrame with a single 'text' column
+        return data_single_column
+
 
 def createCorpus():
-    return 0
+    corpus = preprocessData()
+    return corpus
 
 #Related to Runners world scraping
 KEYWORDS = [
@@ -150,12 +183,11 @@ def theGuardianScraping():
         dict_writer.writeheader()
         dict_writer.writerows(all_articles)
 
-
-
 #EOF: code related to The Gaurdian scraping 
 
 if __name__ == "__main__":
     #runnersWorldScraping()
     #theGuardianScraping()
+    print(createCorpus())
     #Remember to remove again
-    print("Hello world")
+    #print("Hello world")
