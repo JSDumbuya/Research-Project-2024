@@ -180,10 +180,3 @@ def theGuardianScraping():
         dict_writer.writerows(all_articles)
 
 #EOF: code related to The Gaurdian scraping 
-
-if __name__ == "__main__":
-    #runnersWorldScraping()
-    #theGuardianScraping()
-    preprocessData()
-    #Remember to remove again
-    #print("Hello world")
