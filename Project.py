@@ -42,12 +42,8 @@ def preprocessData():
         data_single_column = pd.concat([data['header'], data['body']], ignore_index=True).to_frame(name='text')
 
         # Return the DataFrame with a single 'text' column
-        return data_single_column
+        data_single_column.to_csv('preprocessed_tg_rw.csv', index=False)
 
-
-def createCorpus():
-    corpus = preprocessData()
-    return corpus
 
 #Related to Runners world scraping
 KEYWORDS = [
@@ -188,6 +184,6 @@ def theGuardianScraping():
 if __name__ == "__main__":
     #runnersWorldScraping()
     #theGuardianScraping()
-    print(createCorpus())
+    preprocessData()
     #Remember to remove again
     #print("Hello world")
