@@ -1,0 +1,11 @@
+Target Word (female),Cosine Similarity (female),Target Word (male),Cosine Similarity (male)
+active,0.7471648,human,0.7641107
+human,0.74167544,warm,0.7286516
+lower,0.7343276,athlete,0.72523576
+popular,0.73070276,physical,0.7251836
+shorter,0.7274741,outside,0.7237944
+large,0.72592974,active,0.7215709
+specific,0.72166324,digital,0.71910435
+vertical,0.7207843,dry,0.71858716
+solid,0.7186295,technical,0.7164526
+main,0.7179372,main,0.7158276
