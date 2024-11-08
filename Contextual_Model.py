@@ -5,50 +5,64 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 #Load data
 corpus = pd.read_csv('v2_preprocessed_data.csv')
-adjectives = pd.read_csv('adjectives_from_corpus.csv')
-#verbs = pd.read_csv('verbs.csv')
-nouns = pd.read_csv('nouns_from_corpus.csv')
 
-#Notice verbs have been left out
-target_words = pd.concat([adjectives['adjective']]).tolist()
-
-gendered_words = ['she', 'he', 'woman', 'man', 'women', 'men', 'female', 'male']
-
-#maybe filter out more words
-#filter_out = [gendered_words, ['human', at 'person', 'people', 'runner', 'runners', 'athlete', 'athletes', 'marathoner', 'marathoners', 'participant', 'participants', 'individual', 'individuals', 'person', 'persons]]
-
-#Filter out target words.
-filtered_target_words = [word for word in target_words if word not in gendered_words]
-
+#Create target words to be extracted from the corpus.
+#See word2vec for more gender pairs.
+gender_words = ['she', 'he', 'her', 'him', 'his', 'her','woman', 'man', 'women', 'men']
+#performance
+#personal_life
+#aeasthetics
 
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 model = BertModel.from_pretrained('bert-base-uncased')
 
-def getEmbeddings(word):
+def create_embeddings(word):
     input_ids = tokenizer.encode(word, return_tensors='pt', padding=True, truncation=True, max_length=512)
     attention_mask = (input_ids != 0).long()  
     with torch.no_grad():
         outputs = model(input_ids=input_ids, attention_mask=attention_mask)
-    return outputs.last_hidden_state.mean(dim=1).numpy()[0]
+    
+    last_hidden_state = outputs.last_hidden_state
 
-#word_embeddings = {word: getEmbeddings(word) for word in target_words['word']}
+    word_embeddings = []
 
-corpus_text = ' '.join(corpus['text']) 
-corpus_embedding = getEmbeddings(corpus_text)
-gendered_embeddings = {word: getEmbeddings(word) for word in gendered_words}
-target_word_embeddings = {word: getEmbeddings(word) for word in filtered_target_words}
+    for i, token_id in enumerate(input_ids[0]): 
+        word = tokenizer.decode([token_id]) 
+        embedding = last_hidden_state[0, i].numpy()  
+        
+        word_embeddings.append((word, embedding))
+    
+    return word_embeddings
 
-cosine_similarity_results = []
-cosine_similarity_results = []
+corpus_embeddings = []
+
+for text in corpus['text']:
+    embeddings = create_embeddings(text)
+    corpus_embeddings.extend(embeddings)
+
+embedding_df = pd.DataFrame(corpus_embeddings, columns=['Word', 'Embedding'])
+
+print(embedding_df.head())
+
+
+def extractCategoryEmbeddings():
+    return 0
+
+def calculateCosineSimilarity():
+    return 0
+
+def displayResults():
+    return 0
+
+'''cosine_similarity_results = []
 for gender_word, gender_embedding in gendered_embeddings.items():
     for target_word, target_embedding in target_word_embeddings.items():
         sim = cosine_similarity(gender_embedding.reshape(1, -1), target_embedding.reshape(1, -1))[0][0]
-        cosine_similarity_results.append((gender_word, target_word, sim))
+        cosine_similarity_results.append((gender_word, target_word, sim))'''
 
 
 #Visualize results
-
-similarity_df = pd.DataFrame(cosine_similarity_results, columns=['Gendered Word', 'Target Word', 'Cosine Similarity'])
+'''similarity_df = pd.DataFrame(cosine_similarity_results, columns=['Gendered Word', 'Target Word', 'Cosine Similarity'])
 
 gendered_word_pairs = [('she', 'he'), ('woman', 'man'), ('female', 'male')]
 
@@ -66,4 +80,4 @@ for female, male in gendered_word_pairs:
         f'Cosine Similarity ({male})': male_df['Cosine Similarity'].reset_index(drop=True)
     })
 
-    merged_df.to_csv(f'v1_contextual_model_similarity_{female}_{male}.csv', index=False)
+    merged_df.to_csv(f'v1_contextual_model_similarity_{female}_{male}.csv', index=False)'''
