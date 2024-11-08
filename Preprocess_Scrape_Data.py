@@ -20,25 +20,7 @@ stop_words = set(stopwords.words('english'))
 #tempPreprocessing = []
 
 def preprocessData():
-    '''for file in all_filenames:
-        df = pd.read_csv(file)
-        df.columns = [col.lower() for col in df.columns]  # Standardize column names to lowercase
-        tempPreprocessing.append(df)
-    data = pd.concat(tempPreprocessing, ignore_index=True)'''
-
     data = pd.concat((pd.read_csv(file).rename(columns=str.lower) for file in all_filenames), ignore_index=True)
-
-    '''for column in ['header', 'body']:
-        #Insert space between camel case words
-        data[column] = data[column].apply(lambda text: re.sub(r'(?<=[a-z])(?=[A-Z])', ' ', text))
-        # Convert to lowercase
-        data[column] = data[column].apply(lambda text: text.lower() if isinstance(text, str) else '')
-        # Remove punctuation and non-alphabetic characters
-        data[column] = data[column].apply(lambda text: re.sub(r'[^a-z\s]', ' ', text))
-        # Tokenize the text
-        data[column] = data[column].apply(lambda text: word_tokenize(text))
-        # Remove stopwords and lemmatize
-        data[column] = data[column].apply(lambda tokens: [lemmatizer.lemmatize(word) for word in tokens if word not in stop_words])'''
     
     for column in ['header', 'body']:
         # Insert space between camel case words
