@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import torch
 from transformers import BertTokenizer, BertModel
 from sklearn.metrics.pairwise import cosine_similarity
@@ -7,11 +8,9 @@ from sklearn.metrics.pairwise import cosine_similarity
 corpus = pd.read_csv('v2_preprocessed_data.csv')
 
 #Create target words to be extracted from the corpus.
-#See word2vec for more gender pairs.
-gender_words = ['she', 'he', 'her', 'him', 'his', 'her','woman', 'man', 'women', 'men']
-#performance
-#personal_life
-#aeasthetics
+#gender_words = ['she', 'he', 'her', 'him', 'his', 'hers','woman', 'man', 'women', 'men', 'boy', 'girl', 'lady', 'guy']
+gender_words = ['she', 'he']
+adjectives = []
 
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 model = BertModel.from_pretrained('bert-base-uncased')
@@ -40,44 +39,37 @@ for text in corpus['text']:
     embeddings = create_embeddings(text)
     corpus_embeddings.extend(embeddings)
 
-embedding_df = pd.DataFrame(corpus_embeddings, columns=['Word', 'Embedding'])
+'''embedding_df = pd.DataFrame(corpus_embeddings, columns=['Word', 'Embedding'])
+embedding_df['Embedding'] = embedding_df['Embedding'].apply(lambda x: np.array2string(x, separator=',').strip('[]'))
+embedding_df.to_csv('corpus_embeddings.csv', index=False)'''
 
-print(embedding_df.head())
-
-
-def extractCategoryEmbeddings():
-    return 0
-
-def calculateCosineSimilarity():
-    return 0
-
-def displayResults():
-    return 0
-
-'''cosine_similarity_results = []
-for gender_word, gender_embedding in gendered_embeddings.items():
-    for target_word, target_embedding in target_word_embeddings.items():
-        sim = cosine_similarity(gender_embedding.reshape(1, -1), target_embedding.reshape(1, -1))[0][0]
-        cosine_similarity_results.append((gender_word, target_word, sim))'''
+embedding_df = pd.read_csv('corpus_embeddings.csv')
+embedding_df['Embedding'] = embedding_df['Embedding'].apply(lambda x: np.fromstring(x, sep=','))
 
 
-#Visualize results
-'''similarity_df = pd.DataFrame(cosine_similarity_results, columns=['Gendered Word', 'Target Word', 'Cosine Similarity'])
+def extractCategoryEmbeddings(target_words):
+    extracted_embeddings = {}
 
-gendered_word_pairs = [('she', 'he'), ('woman', 'man'), ('female', 'male')]
+    for word in target_words:
+        word_embeddings = embedding_df[embedding_df['Word'] == word]['Embedding']
+        
+        if not word_embeddings.empty:
+            extracted_embeddings[word] = word_embeddings.values[0]
+        else:
+            print(f"Word '{word}' not found in the corpus embeddings CSV")
 
+    return extracted_embeddings
 
-for female, male in gendered_word_pairs:
-    # Filter the DataFrame for both gendered words
-    female_df = similarity_df[similarity_df['Gendered Word'] == female].nlargest(10, 'Cosine Similarity')
-    male_df = similarity_df[similarity_df['Gendered Word'] == male].nlargest(10, 'Cosine Similarity')
+def calculateCosineSimilarity(gendered_word, target_embeddings):
+    all_results = []
+
+    for target_word, embedding in target_embeddings.items():
+        sim = cosine_similarity(gendered_word.reshape(1, -1), embedding.reshape(1, -1))[0][0]
+        all_results.append((sim, target_word))
     
-    # Merge the results to create the desired table structure
-    merged_df = pd.DataFrame({
-        f'Target Word ({female})': female_df['Target Word'].reset_index(drop=True),
-        f'Cosine Similarity ({female})': female_df['Cosine Similarity'].reset_index(drop=True),
-        f'Target Word ({male})': male_df['Target Word'].reset_index(drop=True),
-        f'Cosine Similarity ({male})': male_df['Cosine Similarity'].reset_index(drop=True)
-    })
+    return all_results
 
-    merged_df.to_csv(f'v1_contextual_model_similarity_{female}_{male}.csv', index=False)'''
+
+def displayResults(gendered_word, cosine_similarities):
+    df = pd.DataFrame(cosine_similarities, columns=[f"Target Words ({gendered_word})", f"Cosine Similarity ({gendered_word})"])
+    return df
