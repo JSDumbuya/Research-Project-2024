@@ -43,22 +43,27 @@ for text in corpus['text']:
 embedding_df['Embedding'] = embedding_df['Embedding'].apply(lambda x: np.array2string(x, separator=',').strip('[]'))
 embedding_df.to_csv('corpus_embeddings.csv', index=False)'''
 
-embedding_df = pd.read_csv('corpus_embeddings.csv')
+#make changes to the path
+embedding_df = pd.read_csv('Research Project/corpus_embeddings.csv')
 embedding_df['Embedding'] = embedding_df['Embedding'].apply(lambda x: np.fromstring(x, sep=','))
 
 
-def extractCategoryEmbeddings(target_words):
+def extractEmbeddings(target_words):
     extracted_embeddings = {}
 
     for word in target_words:
-        word_embeddings = embedding_df[embedding_df['Word'] == word]['Embedding']
+        word_embeddings = embedding_df[embedding_df['Word'] == word]['Embedding'].values
         
-        if not word_embeddings.empty:
-            extracted_embeddings[word] = word_embeddings.values[0]
+        if word_embeddings.size > 0:
+            extracted_embeddings[word] = word_embeddings
         else:
             print(f"Word '{word}' not found in the corpus embeddings CSV")
 
     return extracted_embeddings
+
+
+def calculateAverageEmbedding(embedding):
+    return np.mean(embedding, axis=0)
 
 def calculateCosineSimilarity(gendered_word, target_embeddings):
     all_results = []
