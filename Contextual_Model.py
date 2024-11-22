@@ -10,7 +10,8 @@ corpus = pd.read_csv('v2_preprocessed_data.csv')
 #Create target words to be extracted from the corpus.
 #gender_words = ['she', 'he', 'her', 'him', 'his', 'hers','woman', 'man', 'women', 'men', 'boy', 'girl', 'lady', 'guy']
 gender_words = ['she', 'he']
-adjectives = []
+adjectives = pd.read_csv('adjectives_from_corpus_filtered.csv')
+
 
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 model = BertModel.from_pretrained('bert-base-uncased')
@@ -34,18 +35,23 @@ def create_embeddings(word):
     return word_embeddings
 
 corpus_embeddings = []
+descriptors_embeddings = []
 
-for text in corpus['text']:
+'''for text in corpus['text']:
     embeddings = create_embeddings(text)
-    corpus_embeddings.extend(embeddings)
+    corpus_embeddings.extend(embeddings)'''
 
 '''embedding_df = pd.DataFrame(corpus_embeddings, columns=['Word', 'Embedding'])
 embedding_df['Embedding'] = embedding_df['Embedding'].apply(lambda x: np.array2string(x, separator=',').strip('[]'))
 embedding_df.to_csv('corpus_embeddings.csv', index=False)'''
 
-#make changes to the path
-embedding_df = pd.read_csv('Research Project/corpus_embeddings.csv')
+
+
+#Husk at korrigere path
+embedding_df = pd.read_csv('/Users/jariasallydumbuya/Library/CloudStorage/OneDrive-ITU/Computer Science/3. Semester/Research Project/corpus_embeddings.csv')
 embedding_df['Embedding'] = embedding_df['Embedding'].apply(lambda x: np.fromstring(x, sep=','))
+
+print(embedding_df.head())
 
 
 def extractEmbeddings(target_words):

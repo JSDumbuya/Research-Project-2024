@@ -6,6 +6,8 @@ from nltk.corpus import wordnet as wn
 import ast
 from collections import Counter
 
+#*****To do: do this again with v2_preprocessed_data.csv******
+
 # Load preprocessed data
 preprocessed_data = pd.read_csv('preprocessed_data.csv')
 
