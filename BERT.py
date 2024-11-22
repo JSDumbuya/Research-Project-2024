@@ -5,7 +5,7 @@ from transformers import BertTokenizer, BertModel
 from sklearn.metrics.pairwise import cosine_similarity
 
 #Load data
-corpus = pd.read_csv('v2_preprocessed_data.csv')
+corpus = pd.read_csv('preproce.csv')
 
 #Create target words to be extracted from the corpus.
 #gender_words = ['she', 'he', 'her', 'him', 'his', 'hers','woman', 'man', 'women', 'men', 'boy', 'girl', 'lady', 'guy']
