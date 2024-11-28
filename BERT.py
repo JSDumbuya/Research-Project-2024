@@ -3,58 +3,43 @@ import numpy as np
 import torch
 from transformers import BertTokenizer, BertModel
 from sklearn.metrics.pairwise import cosine_similarity
+import csv 
 
 #Load data
-corpus = pd.read_csv('preproce.csv')
+corpus = pd.read_csv('v3_preprocessed_data.csv')
+corpus = corpus['body'].tolist()
 
-#Create target words to be extracted from the corpus.
 #gender_words = ['she', 'he', 'her', 'him', 'his', 'hers','woman', 'man', 'women', 'men', 'boy', 'girl', 'lady', 'guy']
 gender_words = ['she', 'he']
-adjectives = pd.read_csv('adjectives_from_corpus_filtered.csv')
+adjectives = pd.read_csv('adjectives_from_corpus.csv')
 
 
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 model = BertModel.from_pretrained('bert-base-uncased')
 
-def create_embeddings(word):
-    input_ids = tokenizer.encode(word, return_tensors='pt', padding=True, truncation=True, max_length=512)
-    attention_mask = (input_ids != 0).long()  
-    with torch.no_grad():
-        outputs = model(input_ids=input_ids, attention_mask=attention_mask)
+def tokenize_chunks(chunk):
+    # Tokenize the chunk into tokens, returning token IDs and attention masks
+    encoding = tokenizer(chunk, truncation=True, padding='max_length', max_length=512, return_tensors='pt')
+    return encoding
     
-    last_hidden_state = outputs.last_hidden_state
+
+def create_embeddings(encoding):
+    with torch.no_grad():
+        outputs = model(**encoding)
+        embeddings = outputs.last_hidden_state
+
+    input_ids = encoding['input_ids'][0] 
 
     word_embeddings = []
+    for i, token_id in enumerate(input_ids):
+        word = tokenizer.decode([token_id]).strip()  
+        embedding = embeddings[0, i].numpy()  
+        word_embeddings.append((word, embedding))  
 
-    for i, token_id in enumerate(input_ids[0]): 
-        word = tokenizer.decode([token_id]) 
-        embedding = last_hidden_state[0, i].numpy()  
-        
-        word_embeddings.append((word, embedding))
-    
     return word_embeddings
 
-corpus_embeddings = []
-descriptors_embeddings = []
-
-'''for text in corpus['text']:
-    embeddings = create_embeddings(text)
-    corpus_embeddings.extend(embeddings)'''
-
-'''embedding_df = pd.DataFrame(corpus_embeddings, columns=['Word', 'Embedding'])
-embedding_df['Embedding'] = embedding_df['Embedding'].apply(lambda x: np.array2string(x, separator=',').strip('[]'))
-embedding_df.to_csv('corpus_embeddings.csv', index=False)'''
-
-
-
-#Husk at korrigere path
-embedding_df = pd.read_csv('/Users/jariasallydumbuya/Library/CloudStorage/OneDrive-ITU/Computer Science/3. Semester/Research Project/corpus_embeddings.csv')
-embedding_df['Embedding'] = embedding_df['Embedding'].apply(lambda x: np.fromstring(x, sep=','))
-
-print(embedding_df.head())
-
-
-def extractEmbeddings(target_words):
+#obsolete 
+'''def extractEmbeddings(target_words):
     extracted_embeddings = {}
 
     for word in target_words:
@@ -65,8 +50,7 @@ def extractEmbeddings(target_words):
         else:
             print(f"Word '{word}' not found in the corpus embeddings CSV")
 
-    return extracted_embeddings
-
+    return extracted_embeddings'''
 
 def calculateAverageEmbedding(embedding):
     return np.mean(embedding, axis=0)
@@ -80,7 +64,42 @@ def calculateCosineSimilarity(gendered_word, target_embeddings):
     
     return all_results
 
-
 def displayResults(gendered_word, cosine_similarities):
     df = pd.DataFrame(cosine_similarities, columns=[f"Target Words ({gendered_word})", f"Cosine Similarity ({gendered_word})"])
     return df
+
+
+#***General***
+tokenized_chunks = []
+corpus_embeddings = []
+adjective_embeddings = []
+gendered_word_embeddings = []
+
+for row in corpus:
+    encoding = tokenize_chunks(row)
+    tokenized_chunks.append(encoding)
+
+#***Corpus***
+for encoding in tokenized_chunks:
+    embeddings = create_embeddings(encoding)
+    corpus_embeddings.extend(embeddings)
+
+df_embeddings = pd.DataFrame(corpus_embeddings, columns=['token', 'embedding'])
+df_embeddings.to_csv('corpus_embeddings.csv', index=False)
+
+#***Adjectives***
+
+
+
+'''output_csv = "adjective_embeddings.csv"
+with open(output_csv, mode="w", newline="") as file:
+    writer = csv.writer(file)
+    writer.writerow(["Adjective", "Embedding"])  
+    for word, embedding in adjective_embeddings:
+        writer.writerow([word, embedding.tolist()])'''
+
+#***Gendered words***
+
+#***Cosine similarity***
+
+#***Clustering***

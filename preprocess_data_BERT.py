@@ -6,9 +6,6 @@ from nltk.tokenize import sent_tokenize
 
 all_filenames = ['runnersworld.csv', 'thegaurdian.csv', 'irunfar copy.csv']
 
-#To do:
-#Lemmatization does not seem to work.
-# remove stop words
 
 def preprocessData():
     data = pd.concat((pd.read_csv(file).rename(columns=str.lower) for file in all_filenames), ignore_index=True)
