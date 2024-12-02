@@ -3,7 +3,7 @@ import numpy as np
 import torch
 from transformers import BertTokenizer, BertModel
 from sklearn.metrics.pairwise import cosine_similarity
-import csv 
+import ast 
 
 #Load data
 corpus = pd.read_csv('v3_preprocessed_data.csv')
@@ -11,7 +11,7 @@ corpus = corpus['body'].tolist()
 
 #gender_words = ['she', 'he', 'her', 'him', 'his', 'hers','woman', 'man', 'women', 'men', 'boy', 'girl', 'lady', 'guy']
 gender_words = ['she', 'he']
-adjectives = pd.read_csv('adjectives_from_corpus.csv')
+adjectives = pd.read_csv('adjectives_from_corpus.csv')['adjective'].tolist()
 
 
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -38,68 +38,110 @@ def create_embeddings(encoding):
 
     return word_embeddings
 
-#obsolete 
-'''def extractEmbeddings(target_words):
-    extracted_embeddings = {}
+
+def extractEmbeddings(target_words, embedding_df):
+    extracted_embeddings = []
 
     for word in target_words:
-        word_embeddings = embedding_df[embedding_df['Word'] == word]['Embedding'].values
+        word_embeddings = embedding_df[embedding_df['token'] == word]['embedding'].values
         
         if word_embeddings.size > 0:
-            extracted_embeddings[word] = word_embeddings
+            for embedding in word_embeddings:  
+                extracted_embeddings.append({
+                    'word': word,
+                    'embedding': embedding
+                })
         else:
-            print(f"Word '{word}' not found in the corpus embeddings CSV")
+            print(f"Word '{word}' not found in the corpus embeddings")
 
-    return extracted_embeddings'''
+    return extracted_embeddings
 
-def calculateAverageEmbedding(embedding):
-    return np.mean(embedding, axis=0)
+def calculateAverageEmbedding(gendered_word_embeddings, target_word):
+    filtered_df = gendered_word_embeddings[gendered_word_embeddings['word'] == target_word]
+    embeddings = filtered_df['embedding'].values
+    avg_embedding = np.mean(embeddings, axis=0)
+    return target_word, avg_embedding
 
-def calculateCosineSimilarity(gendered_word, target_embeddings):
+def calculateCosineSimilarity(gendered_embedding, target_embeddings):
     all_results = []
 
-    for target_word, embedding in target_embeddings.items():
-        sim = cosine_similarity(gendered_word.reshape(1, -1), embedding.reshape(1, -1))[0][0]
+    for _, row in target_embeddings.iterrows():
+        target_word = row['word']
+        embedding = row['embedding']
+        sim = cosine_similarity(gendered_embedding.reshape(1, -1), embedding.reshape(1, -1))[0][0]
         all_results.append((sim, target_word))
+
+        all_results.sort(reverse=True, key=lambda x: x[0])
     
     return all_results
 
 def displayResults(gendered_word, cosine_similarities):
     df = pd.DataFrame(cosine_similarities, columns=[f"Target Words ({gendered_word})", f"Cosine Similarity ({gendered_word})"])
-    return df
+    print(df)
 
 
 #***General***
-tokenized_chunks = []
-corpus_embeddings = []
+#tokenized_chunks = []
+#corpus_embeddings = []
 adjective_embeddings = []
 gendered_word_embeddings = []
 
-for row in corpus:
+'''for row in corpus:
     encoding = tokenize_chunks(row)
-    tokenized_chunks.append(encoding)
+    tokenized_chunks.append(encoding)'''
 
-#***Corpus***
-for encoding in tokenized_chunks:
+#***Create corpus***
+'''for encoding in tokenized_chunks:
     embeddings = create_embeddings(encoding)
     corpus_embeddings.extend(embeddings)
 
 df_embeddings = pd.DataFrame(corpus_embeddings, columns=['token', 'embedding'])
-df_embeddings.to_csv('corpus_embeddings.csv', index=False)
+df_embeddings.to_csv('corpus_embeddings.csv', index=False)'''
 
-#***Adjectives***
+#Husk at skifte sti
+corpus = pd.read_csv('/Users/jariasallydumbuya/Library/CloudStorage/OneDrive-ITU/Computer Science/3. Semester/Research Project/corpus_embeddings.csv')
 
 
+#***Extract adjective embeddings***
+'''extracted_adj = extractEmbeddings(adjectives, corpus)
+adjective_embedding_df = pd.DataFrame(extracted_adj)
+adjective_embedding_df.to_csv('adjectives_embeddings.csv', index=False)'''
 
-'''output_csv = "adjective_embeddings.csv"
-with open(output_csv, mode="w", newline="") as file:
-    writer = csv.writer(file)
-    writer.writerow(["Adjective", "Embedding"])  
-    for word, embedding in adjective_embeddings:
-        writer.writerow([word, embedding.tolist()])'''
+'''Word 'u.s.' not found in the corpus embeddings
+Word 'u.k.' not found in the corpus embeddings
+Word 'subscribe' not found in the corpus embeddings
+Word 'uphill' not found in the corpus embeddings
+Word 'last-minute' not found in the corpus embeddings
+Word 'two-time' not found in the corpus embeddings'''
 
-#***Gendered words***
+adjective_embeddings = pd.read_csv('/Users/jariasallydumbuya/Library/CloudStorage/OneDrive-ITU/Computer Science/3. Semester/Research Project/adjectives_embeddings.csv')
+adjective_embeddings['embedding'] = adjective_embeddings['embedding'].apply(
+    lambda x: np.fromstring(x.strip("[]"), sep=' ')
+)
 
-#***Cosine similarity***
+
+#***Create gendered embeddings***
+'''extract_gendered_words = extractEmbeddings(gender_words, corpus)
+gendered_word_embedding_df = pd.DataFrame(extract_gendered_words)
+gendered_word_embedding_df.to_csv('gendered_word_embeddings.csv', index=False)'''
+gendered_word_embeddings = pd.read_csv('gendered_word_embeddings.csv')
+gendered_word_embeddings['embedding'] = gendered_word_embeddings['embedding'].apply(
+    lambda x: np.fromstring(x.strip("[]"), sep=' ')
+)
+
+she_embedding = calculateAverageEmbedding(gendered_word_embeddings, 'she')
+he_embedding = calculateAverageEmbedding(gendered_word_embeddings, 'he')
+
+
+#***Calculate cosine similarity***
+
+she_similarities = calculateCosineSimilarity(she_embedding[1], adjective_embeddings)
+he_similarities = calculateCosineSimilarity(he_embedding[1], adjective_embeddings)
+
+print(she_similarities[:10])
+print('********')
+print(he_similarities[:10])
+
+#displayResults(she_embedding[0], she_similarities)
 
 #***Clustering***
