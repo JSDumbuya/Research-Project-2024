@@ -3,7 +3,6 @@ import numpy as np
 import torch
 from transformers import BertTokenizer, BertModel
 from sklearn.metrics.pairwise import cosine_similarity
-import ast 
 
 #Load data
 corpus = pd.read_csv('v3_preprocessed_data.csv')
@@ -75,11 +74,6 @@ def calculateCosineSimilarity(gendered_embedding, target_embeddings):
     
     return all_results
 
-def displayResults(gendered_word, cosine_similarities):
-    df = pd.DataFrame(cosine_similarities, columns=[f"Target Words ({gendered_word})", f"Cosine Similarity ({gendered_word})"])
-    print(df)
-
-
 #***General***
 #tokenized_chunks = []
 #corpus_embeddings = []
@@ -90,7 +84,7 @@ gendered_word_embeddings = []
     encoding = tokenize_chunks(row)
     tokenized_chunks.append(encoding)'''
 
-#***Create corpus***
+#***Create corpus and store result***
 '''for encoding in tokenized_chunks:
     embeddings = create_embeddings(encoding)
     corpus_embeddings.extend(embeddings)
@@ -102,7 +96,7 @@ df_embeddings.to_csv('corpus_embeddings.csv', index=False)'''
 corpus = pd.read_csv('/Users/jariasallydumbuya/Library/CloudStorage/OneDrive-ITU/Computer Science/3. Semester/Research Project/corpus_embeddings.csv')
 
 
-#***Extract adjective embeddings***
+#***Extract adjective embeddings and store result***
 '''extracted_adj = extractEmbeddings(adjectives, corpus)
 adjective_embedding_df = pd.DataFrame(extracted_adj)
 adjective_embedding_df.to_csv('adjectives_embeddings.csv', index=False)'''
@@ -133,15 +127,15 @@ she_embedding = calculateAverageEmbedding(gendered_word_embeddings, 'she')
 he_embedding = calculateAverageEmbedding(gendered_word_embeddings, 'he')
 
 
-#***Calculate cosine similarity***
+#***Calculate and store cosine similarity***
 
 she_similarities = calculateCosineSimilarity(she_embedding[1], adjective_embeddings)
 he_similarities = calculateCosineSimilarity(he_embedding[1], adjective_embeddings)
 
-print(she_similarities[:10])
-print('********')
-print(he_similarities[:10])
+df_she_similarities = pd.DataFrame(she_similarities, columns=['cosine similarity', 'target word'])
+df_she_similarities.to_csv('she_cosine_similarities.csv', index=False)
 
-#displayResults(she_embedding[0], she_similarities)
+df_he_similarities = pd.DataFrame(he_similarities, columns=['cosine similarity', 'target word'])
+df_he_similarities.to_csv('he_cosine_similarities.csv', index=False)
 
 #***Clustering***
