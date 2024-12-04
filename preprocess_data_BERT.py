@@ -49,6 +49,6 @@ def preprocessData():
     # Create a new DataFrame for the chunked data
     chunked_df = pd.DataFrame(chunked_data, columns=['body'])
     
-    chunked_df.to_csv('preprocessed_data_BERT.csv', index=False)
+    chunked_df.to_csv('v3_preprocessed_data.csv', index=False)
 
 preprocessData()

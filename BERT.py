@@ -3,10 +3,7 @@ import numpy as np
 import torch
 from transformers import BertTokenizer, BertModel
 from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.cluster import KMeans
-import matplotlib.pyplot as plt
-from wordcloud import WordCloud
-from collections import Counter
+
 
 #Load data
 corpus = pd.read_csv('v3_preprocessed_data.csv')
@@ -69,10 +66,10 @@ def calculateCosineSimilarity(gendered_embedding, target_embeddings):
     all_results = []
 
     for _, row in target_embeddings.iterrows():
-        target_word = row['word']
-        embedding = row['embedding']
+        target_word = row['word'] 
+        embedding = row['embedding'] 
         sim = cosine_similarity(gendered_embedding.reshape(1, -1), embedding.reshape(1, -1))[0][0]
-        all_results.append((sim, target_word))
+        all_results.append((sim, target_word, embedding))
 
         all_results.sort(reverse=True, key=lambda x: x[0])
     
@@ -119,6 +116,7 @@ adjective_embeddings['embedding'] = adjective_embeddings['embedding'].apply(
 )
 
 
+
 #***Create gendered embeddings***
 '''extract_gendered_words = extractEmbeddings(gender_words, corpus)
 gendered_word_embedding_df = pd.DataFrame(extract_gendered_words)
@@ -134,50 +132,18 @@ he_embedding = calculateAverageEmbedding(gendered_word_embeddings, 'he')
 
 #***Calculate and store cosine similarity***
 
-'''she_similarities = calculateCosineSimilarity(she_embedding[1], adjective_embeddings)
-he_similarities = calculateCosineSimilarity(he_embedding[1], adjective_embeddings)'''
+she_similarities = calculateCosineSimilarity(she_embedding[1], adjective_embeddings)[:10]
+he_similarities = calculateCosineSimilarity(he_embedding[1], adjective_embeddings)[:10]
 
-'''df_she_similarities = pd.DataFrame(she_similarities, columns=['cosine similarity', 'target word'])
+df_she_similarities = pd.DataFrame(she_similarities, columns=['cosine similarity', 'target word', 'embedding'])
 df_she_similarities.to_csv('she_cosine_similarities.csv', index=False)
 
-df_he_similarities = pd.DataFrame(he_similarities, columns=['cosine similarity', 'target word'])
-df_he_similarities.to_csv('he_cosine_similarities.csv', index=False)'''
+df_he_similarities = pd.DataFrame(he_similarities, columns=['cosine similarity', 'target word', 'embedding'])
+df_he_similarities.to_csv('he_cosine_similarities.csv', index=False)
 
-similarities_she = pd.read_csv('she_cosine_similarities.csv')
-similarities_he = pd.read_csv('he_cosine_similarities.csv')
 
-#***Clustering***
-embeddings = np.array(adjective_embeddings['embedding'].tolist())
-#Use Elbow method to find optimal number of clusters
-optimal_k = 10 
-kmeans = KMeans(n_clusters=optimal_k, random_state=42)
-adjective_embeddings['cluster'] = kmeans.fit_predict(embeddings)
-adjective_embeddings['cluster'] = kmeans.labels_
-adjective_embeddings[['word', 'cluster']].to_csv('adjective_clusters.csv', index=False)
 
-#Note: If we want to visualize clusters we need to reduce the dimensionality of the embeddings with e.g. PCA to 2D or 3D.
 
-'''to find out which cluster a words belongs to:
-cluster_label = kmeans.predict(new_embedding.reshape(1, -1))
-
-print(f"The embedding belongs to cluster: {cluster_label[0]}")
-'''
-
-#Quick visualization of the clusters
-
-cluster_data = pd.read_csv('adjective_clusters.csv', header=None, names=['word', 'cluster'])
-#grouped = cluster_data.groupby('cluster')
-clusters = cluster_data.groupby('cluster')['word'].apply(list).to_dict()
-
-for cluster, words in clusters.items():
-    word_freq = Counter(words)
-    wordcloud = WordCloud(width=800, height=400, background_color='white').generate_from_frequencies(word_freq)
-    
-    plt.figure(figsize=(10, 5))
-    plt.imshow(wordcloud, interpolation='bilinear')
-    plt.axis('off')
-    plt.title(f'Cluster {cluster}')
-    plt.show()
 
 
 
