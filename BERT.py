@@ -9,9 +9,9 @@ from sklearn.metrics.pairwise import cosine_similarity
 corpus = pd.read_csv('v3_preprocessed_data.csv')
 corpus = corpus['body'].tolist()
 
-#gender_words = ['she', 'he', 'her', 'him', 'his', 'hers','woman', 'man', 'women', 'men', 'boy', 'girl', 'lady', 'guy']
-gender_words = ['she', 'he']
-adjectives = pd.read_csv('adjectives_from_corpus.csv')['adjective'].tolist()
+female_keywords = ["she", "her", "hers"]
+male_keywords = ["he", "him", "his"]
+adjectives = pd.read_csv('adjectives_from_corpus_filtered.csv')['adjective'].tolist()
 
 
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -56,11 +56,27 @@ def extractEmbeddings(target_words, embedding_df):
 
     return extracted_embeddings
 
-def calculateAverageEmbedding(gendered_word_embeddings, target_word):
-    filtered_df = gendered_word_embeddings[gendered_word_embeddings['word'] == target_word]
-    embeddings = filtered_df['embedding'].values
-    avg_embedding = np.mean(embeddings, axis=0)
-    return target_word, avg_embedding
+
+def calculateAverageEmbedding(gendered_word_embeddings, target_words, target_dim=768):
+    embeddings_list = []
+    
+    for word in target_words:
+        filtered_df = gendered_word_embeddings[gendered_word_embeddings['word'] == word]
+        embeddings = filtered_df['embedding'].values
+        
+        embedding = embeddings[0]
+        if embedding.shape[0] < target_dim:
+            padding = np.zeros(target_dim - embedding.shape[0])
+            embedding = np.concatenate([embedding, padding])
+        elif embedding.shape[0] > target_dim:
+            embedding = embedding[:target_dim]
+        
+        embeddings_list.append(embedding)
+    
+    all_embeddings = np.vstack(embeddings_list)
+    avg_embedding = np.mean(all_embeddings, axis=0)
+    
+    return avg_embedding
 
 def calculateCosineSimilarity(gendered_embedding, target_embeddings):
     all_results = []
@@ -76,8 +92,8 @@ def calculateCosineSimilarity(gendered_embedding, target_embeddings):
     return all_results
 
 #***General***
-#tokenized_chunks = []
-#corpus_embeddings = []
+tokenized_chunks = []
+corpus_embeddings = []
 adjective_embeddings = []
 gendered_word_embeddings = []
 similarities_she = []
@@ -103,37 +119,37 @@ corpus = pd.read_csv('/Users/jariasallydumbuya/Library/CloudStorage/OneDrive-ITU
 adjective_embedding_df = pd.DataFrame(extracted_adj)
 adjective_embedding_df.to_csv('adjectives_embeddings.csv', index=False)'''
 
-'''Word 'u.s.' not found in the corpus embeddings
-Word 'u.k.' not found in the corpus embeddings
+'''
 Word 'subscribe' not found in the corpus embeddings
 Word 'uphill' not found in the corpus embeddings
 Word 'last-minute' not found in the corpus embeddings
-Word 'two-time' not found in the corpus embeddings'''
+Word 'two-time' not found in the corpus embeddings
+Word 'fittest' not found in the corpus embeddings
+'''
 
 adjective_embeddings = pd.read_csv('/Users/jariasallydumbuya/Library/CloudStorage/OneDrive-ITU/Computer Science/3. Semester/Research Project/adjectives_embeddings.csv')
 adjective_embeddings['embedding'] = adjective_embeddings['embedding'].apply(
     lambda x: np.fromstring(x.strip("[]"), sep=' ')
 )
 
-
-
 #***Create gendered embeddings***
-'''extract_gendered_words = extractEmbeddings(gender_words, corpus)
+gender_words = male_keywords + female_keywords
+extract_gendered_words = extractEmbeddings(gender_words, corpus)
 gendered_word_embedding_df = pd.DataFrame(extract_gendered_words)
-gendered_word_embedding_df.to_csv('gendered_word_embeddings.csv', index=False)'''
+gendered_word_embedding_df.to_csv('gendered_word_embeddings.csv', index=False)
 gendered_word_embeddings = pd.read_csv('gendered_word_embeddings.csv')
 gendered_word_embeddings['embedding'] = gendered_word_embeddings['embedding'].apply(
     lambda x: np.fromstring(x.strip("[]"), sep=' ')
 )
 
-she_embedding = calculateAverageEmbedding(gendered_word_embeddings, 'she')
-he_embedding = calculateAverageEmbedding(gendered_word_embeddings, 'he')
+she_embedding = calculateAverageEmbedding(gendered_word_embeddings, female_keywords)
+he_embedding = calculateAverageEmbedding(gendered_word_embeddings, male_keywords)
 
 
 #***Calculate and store cosine similarity***
 
-she_similarities = calculateCosineSimilarity(she_embedding[1], adjective_embeddings)[:10]
-he_similarities = calculateCosineSimilarity(he_embedding[1], adjective_embeddings)[:10]
+she_similarities = calculateCosineSimilarity(she_embedding, adjective_embeddings)[:10]
+he_similarities = calculateCosineSimilarity(he_embedding, adjective_embeddings)[:10]
 
 df_she_similarities = pd.DataFrame(she_similarities, columns=['cosine similarity', 'target word', 'embedding'])
 df_she_similarities.to_csv('she_cosine_similarities.csv', index=False)

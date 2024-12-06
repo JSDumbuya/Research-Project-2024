@@ -3,7 +3,6 @@ import nltk
 nltk.download('punkt')
 nltk.download('averaged_perceptron_tagger_eng')
 from nltk.corpus import wordnet as wn
-import ast
 from collections import Counter
 
 #*****To do: do this again with v2_preprocessed_data.csv******
