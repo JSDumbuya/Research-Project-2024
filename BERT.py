@@ -9,9 +9,13 @@ from sklearn.metrics.pairwise import cosine_similarity
 corpus = pd.read_csv('v3_preprocessed_data.csv')
 corpus = corpus['body'].tolist()
 
-female_keywords = ["she", "her", "hers"]
-male_keywords = ["he", "him", "his"]
+#female_keywords = ["she", "her", "hers"]
+#male_keywords = ["he", "him", "his"]
+female_keywords = ["she", "her", "hers", "woman", "women"]
+male_keywords = ["he", "him", "his", "man", "men"]
 adjectives = pd.read_csv('adjectives_from_corpus_filtered.csv')['adjective'].tolist()
+nouns = pd.read_csv('nouns_from_corpus.csv')['noun'].tolist()
+verbs = pd.read_csv('verbs_from_corpus.csv')['verb'].tolist()
 
 
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -63,6 +67,10 @@ def calculateAverageEmbedding(gendered_word_embeddings, target_words, target_dim
     for word in target_words:
         filtered_df = gendered_word_embeddings[gendered_word_embeddings['word'] == word]
         embeddings = filtered_df['embedding'].values
+
+        if embeddings.size == 0:
+            print(f"Warning: No embeddings found for the word '{word}'")
+            continue
         
         embedding = embeddings[0]
         if embedding.shape[0] < target_dim:
@@ -95,6 +103,7 @@ def calculateCosineSimilarity(gendered_embedding, target_embeddings):
 tokenized_chunks = []
 corpus_embeddings = []
 adjective_embeddings = []
+noun_embeddings = []
 gendered_word_embeddings = []
 similarities_she = []
 similarities_he = []
@@ -120,11 +129,9 @@ adjective_embedding_df = pd.DataFrame(extracted_adj)
 adjective_embedding_df.to_csv('adjectives_embeddings.csv', index=False)'''
 
 '''
-Word 'subscribe' not found in the corpus embeddings
-Word 'uphill' not found in the corpus embeddings
-Word 'last-minute' not found in the corpus embeddings
-Word 'two-time' not found in the corpus embeddings
 Word 'fittest' not found in the corpus embeddings
+Word 'toughest' not found in the corpus embeddings
+Word 'vegan' not found in the corpus embeddings
 '''
 
 adjective_embeddings = pd.read_csv('/Users/jariasallydumbuya/Library/CloudStorage/OneDrive-ITU/Computer Science/3. Semester/Research Project/adjectives_embeddings.csv')
@@ -132,12 +139,32 @@ adjective_embeddings['embedding'] = adjective_embeddings['embedding'].apply(
     lambda x: np.fromstring(x.strip("[]"), sep=' ')
 )
 
+#***Extract noun embeddings and store result***
+'''extracted_noun = extractEmbeddings(nouns, corpus)
+noun_embedding_df = pd.DataFrame(extracted_noun)
+noun_embedding_df.to_csv('noun_embeddings.csv', index=False)'''
+
+'''Word 'mds' not found in the corpus embeddings
+Word 'marathons' not found in the corpus embeddings
+Word 'finishers' not found in the corpus embeddings
+Word 'entrants' not found in the corpus embeddings
+Word 'finisher' not found in the corpus embeddings'''
+
+#***Extract verb embeddings and store result***
+
+'''extracted_verbs = extractEmbeddings(verbs, corpus)
+verb_embedding_df = pd.DataFrame(extracted_verbs)
+verb_embedding_df.to_csv('verb_embeddings.csv', index=False)'''
+
+'''Word 'updating' not found in the corpus embeddings'''
+
 #***Create gendered embeddings***
 gender_words = male_keywords + female_keywords
 extract_gendered_words = extractEmbeddings(gender_words, corpus)
 gendered_word_embedding_df = pd.DataFrame(extract_gendered_words)
 gendered_word_embedding_df.to_csv('gendered_word_embeddings.csv', index=False)
-gendered_word_embeddings = pd.read_csv('gendered_word_embeddings.csv')
+
+gendered_word_embeddings = pd.read_csv('/Users/jariasallydumbuya/Library/CloudStorage/OneDrive-ITU/Computer Science/3. Semester/Research Project/gendered_word_embeddings_ext.csv')
 gendered_word_embeddings['embedding'] = gendered_word_embeddings['embedding'].apply(
     lambda x: np.fromstring(x.strip("[]"), sep=' ')
 )
@@ -152,10 +179,14 @@ she_similarities = calculateCosineSimilarity(she_embedding, adjective_embeddings
 he_similarities = calculateCosineSimilarity(he_embedding, adjective_embeddings)[:10]
 
 df_she_similarities = pd.DataFrame(she_similarities, columns=['cosine similarity', 'target word', 'embedding'])
-df_she_similarities.to_csv('she_cosine_similarities.csv', index=False)
+df_she_similarities.to_csv('she_cosine_similarities_ext.csv', index=False)
+df_she_no_embeddings = df_she_similarities.drop(columns=['embedding'])
+df_she_no_embeddings.to_csv('she_cosine_similarities_no_embeddings_ext.csv', index=False)
 
 df_he_similarities = pd.DataFrame(he_similarities, columns=['cosine similarity', 'target word', 'embedding'])
-df_he_similarities.to_csv('he_cosine_similarities.csv', index=False)
+df_he_similarities.to_csv('he_cosine_similarities_ext.csv', index=False)
+df_he_no_embeddings = df_he_similarities.drop(columns=['embedding'])
+df_he_no_embeddings.to_csv('he_cosine_similarities_no_embeddings_ext.csv', index=False)
 
 
 
